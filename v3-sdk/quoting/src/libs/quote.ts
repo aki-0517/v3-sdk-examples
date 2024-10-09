@@ -11,6 +11,30 @@ import { getProvider } from '../libs/providers'
 import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 
 export async function quote(): Promise<string> {
+  const currentPoolAddress = computePoolAddress({
+    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
+    fee: CurrentConfig.tokens.poolFee,
+  })
+
+  const provider = new ethers.providers.JsonRpcProvider(
+    CurrentConfig.rpc.mainnet
+  )
+  const poolContract = new ethers.Contract(
+    currentPoolAddress,
+    IUniswapV3PoolABI.abi,
+    provider
+  )
+
+  const [token0, token1, fee, liquidity, slot0] = await Promise.all([
+    poolContract.token0(),
+    poolContract.token1(),
+    poolContract.fee(),
+    poolContract.liquidity(),
+    poolContract.slot0(),
+  ])
+
   const quoterContract = new ethers.Contract(
     QUOTER_CONTRACT_ADDRESS,
     Quoter.abi,
